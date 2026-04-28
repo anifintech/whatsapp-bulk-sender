@@ -1,6 +1,6 @@
-import express from 'express'
-import { whatsapp, getStatus } from './whatsapp.js'
-import { sendBulk } from './sender.js'
+const express = require('express')
+const { whatsapp, getStatus } = require('./whatsapp')
+const { sendBulk } = require('./sender')
 
 const app = express()
 app.use(express.json({ limit: '10mb' }))

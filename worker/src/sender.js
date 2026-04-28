@@ -1,12 +1,15 @@
-import { createClient } from '@supabase/supabase-js'
-import { getSocket } from './whatsapp.js'
+const { createClient } = require('@supabase/supabase-js')
+const { getSocket } = require('./whatsapp')
 
 const DELAY_MS = 1200
 
-export async function sendBulk({ campaign_id, message, messages, supabase_url, supabase_key }) {
+async function sendBulk({ campaign_id, message, messages, supabase_url, supabase_key }) {
   const supabase = createClient(supabase_url, supabase_key)
   const sock = getSocket()
-  if (!sock) { await supabase.from('whatsapp_campaigns').update({ status: 'failed' }).eq('id', campaign_id); return }
+  if (!sock) {
+    await supabase.from('whatsapp_campaigns').update({ status: 'failed' }).eq('id', campaign_id)
+    return
+  }
 
   for (const msg of messages) {
     const { data: camp } = await supabase.from('whatsapp_campaigns').select('status').eq('id', campaign_id).single()
@@ -22,3 +25,5 @@ export async function sendBulk({ campaign_id, message, messages, supabase_url, s
   }
   await supabase.from('whatsapp_campaigns').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', campaign_id)
 }
+
+module.exports = { sendBulk }
