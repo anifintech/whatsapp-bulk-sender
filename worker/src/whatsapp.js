@@ -9,8 +9,12 @@ const getStatus = () => ({ connected: isConnected, phone: connectedPhone, qr: qr
 const getSocket = () => sock
 
 async function whatsapp() {
+  console.log('Initializing WhatsApp connection...')
   const { state, saveCreds } = await useMultiFileAuthState('./auth_info')
+  console.log('Auth state loaded')
+
   const { version } = await fetchLatestBaileysVersion()
+  console.log('Baileys version:', version)
 
   sock = makeWASocket({
     version,
@@ -24,21 +28,26 @@ async function whatsapp() {
 
   sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
+      console.log('QR code received, generating data URL...')
       qrDataUrl = await QRCode.toDataURL(qr)
       isConnected = false
-      console.log('Scan the QR code to connect WhatsApp')
+      console.log('QR ready — visit /qr to scan')
     }
     if (connection === 'close') {
       isConnected = false
       qrDataUrl = null
       const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
-      if (reason !== DisconnectReason.loggedOut) setTimeout(whatsapp, 5000)
+      console.log('Connection closed, reason:', reason)
+      if (reason !== DisconnectReason.loggedOut) {
+        console.log('Reconnecting in 5s...')
+        setTimeout(whatsapp, 5000)
+      }
     }
     if (connection === 'open') {
       isConnected = true
       qrDataUrl = null
       connectedPhone = sock.user?.id?.split(':')[0] ?? null
-      console.log('WhatsApp connected:', connectedPhone)
+      console.log('✅ WhatsApp connected:', connectedPhone)
     }
   })
 }
